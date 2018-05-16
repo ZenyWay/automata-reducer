@@ -5,7 +5,7 @@ a finite-state-machine that switches reducers.
 
 # example
 see this example in [this directory](./example/index.ts).
-run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v1.0.1/example/index.html).
+run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.0/example/index.html).
 
 ```ts
 import createAutomataReducer, { AutomataSpec, StandardAction } from '../src/'
@@ -37,20 +37,15 @@ log('INCREMENT(42):')(fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
 const init = reducer(fourtytwo, actions.RESET())
 log('RESET():')(init) // RESET(): {"state":"init","value":0}
 
-function increment (
-  state: Partial<State> = {},
-  action: StandardAction<number>
-): Partial<State> {
-  const { value = 0 } = state
+function increment (state: State, action: StandardAction<number>): State {
+  const { value = 0 } = state || {}
   const { payload } = action
-  return { value: payload + value }
+  return state && !payload ? state : { ...state, value: payload + value }
 }
 
-function reset (
-  state: Partial<State>,
-  action: StandardAction<void>
-): Partial<State> {
-  return { value: 0 }
+function reset (state: State, action: StandardAction<void>): State {
+  const { value = 0 } = state || {}
+  return state && !value ? state : { ...state, value: 0 }
 }
 ```
 
@@ -87,7 +82,7 @@ export declare type Reducer<S, A = StandardAction<any>> =
 export declare type ActionStandardizer = <A, P>(action: A) => StandardAction<P>
 ```
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v1.0.1/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.0/spec/web/index.html)
 in your browser.
 
 # TypeScript

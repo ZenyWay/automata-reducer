@@ -15,7 +15,7 @@
 ;
 export interface AutomataSpec<S,A=StandardAction<any>> {
   [state: string]: {
-    [type: string]: (Reducer<Partial<S>,A>|string)[]|(Reducer<Partial<S>,A>|string)
+    [type: string]: (Reducer<S,A>|string)[]|(Reducer<S,A>|string)
   }
 }
 
@@ -60,11 +60,7 @@ export default function createAutomataReducer<S extends object,A=StandardAction<
     let i = reducers.length
     let state = previous
     while (i--) {
-      const reducer = reducers[i]
-      const update = reducer(state, event)
-      if (update) {
-        state = { ...(<object>state), ...(<object>update) } as S
-      }
+      state = reducers[i](state, event)
     }
     return state
   }
@@ -82,24 +78,26 @@ function preprocess <S,A>(
           reducers[type] = [].concat(events[type]).map(withAutomataReducer)
           return reducers
         },
-        {} as { [type: string]: Reducer<Partial<S>,A>[] }
+        {} as { [type: string]: Reducer<S,A>[] }
       )
       return states
     },
     {} as Automata<S,A>
   )
 
-  function withAutomataReducer (
-    reducer: string|Reducer<Partial<S>,A>
-  ): Reducer<Partial<S>,A> {
+  function withAutomataReducer (reducer: string|Reducer<S,A>): Reducer<S,A> {
     return !isString(reducer)
       ? reducer
-      : function () { return { [key]: reducer } as any }
+      : function (state: S) {
+        return state && state[key] === reducer
+          ? state
+          : { ...(<any>state), [key]: reducer }
+      }
   }
 }
 
 interface Automata<S,A=StandardAction<any>> {
-  [state: string]: { [type: string]: Reducer<Partial<S>,A>[] }
+  [state: string]: { [type: string]: Reducer<S,A>[] }
 }
 
 function isString (v: any): v is string {
