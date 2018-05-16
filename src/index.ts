@@ -15,7 +15,7 @@
 ;
 export interface AutomataSpec<S,A=StandardAction<any>> {
   [state: string]: {
-    [type: string]: (Reducer<S,A>|string)[]|(Reducer<S,A>|string)
+    [type: string]: (Reducer<Partial<S>,A>|string)[]|(Reducer<Partial<S>,A>|string)
   }
 }
 
@@ -24,8 +24,7 @@ export interface StandardAction<P> {
   payload?: P
 }
 
-export type Reducer<S,A=StandardAction<any>> =
-  (state: Partial<S>, action: A) => Partial<S>
+export type Reducer<S,A=StandardAction<any>> = (state: S, action: A) => S
 
 export type ActionStandardizer = <A,P>(action: A) => StandardAction<P>
 
@@ -75,26 +74,32 @@ function preprocess <S,A>(
   automata: AutomataSpec<S,A>,
   key: string
 ): Automata<S,A> {
-  return Object.keys(automata).reduce(function (states, state) {
-    const events = automata[state]
-    states[state] = Object.keys(events).reduce(function (reducers, type) {
-      reducers[type] = [].concat(events[type]).map(withAutomataReducer)
-      return reducers
-    }, {} as { [type: string]: Reducer<S,A>[] })
-    return states
-  }, {} as Automata<S,A>)
+  return Object.keys(automata).reduce(
+    function (states, state) {
+      const events = automata[state]
+      states[state] = Object.keys(events).reduce(
+        function (reducers, type) {
+          reducers[type] = [].concat(events[type]).map(withAutomataReducer)
+          return reducers
+        },
+        {} as { [type: string]: Reducer<Partial<S>,A>[] }
+      )
+      return states
+    },
+    {} as Automata<S,A>
+  )
 
-  function withAutomataReducer (reducer: string|Reducer<S,A>): Reducer<S,A> {
+  function withAutomataReducer (
+    reducer: string|Reducer<Partial<S>,A>
+  ): Reducer<Partial<S>,A> {
     return !isString(reducer)
       ? reducer
-      : function () {
-          return { [key]: reducer } as any
-        }
+      : function () { return { [key]: reducer } as any }
   }
 }
 
 interface Automata<S,A=StandardAction<any>> {
-  [state: string]: { [type: string]: Reducer<S,A>[] }
+  [state: string]: { [type: string]: Reducer<Partial<S>,A>[] }
 }
 
 function isString (v: any): v is string {

@@ -42,11 +42,11 @@ const automata: AutomataSpec<State> = {
 const reducer = createAutomataReducer(automata, 'init')
 
 const idle = reducer(void 0, actions.IDLE())
-log('IDLE():')(idle)
+log('IDLE():')(idle) // IDLE(): {"state":"idle"}
 const fourtytwo = reducer(idle, actions.INCREMENT(42))
-log('INCREMENT(42):')(fourtytwo)
+log('INCREMENT(42):')(fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
 const init = reducer(fourtytwo, actions.RESET())
-log('RESET():')(init)
+log('RESET():')(init) // RESET(): {"state":"init","value":0}
   </pre>
   <br/>
   <div id="terminal"></div>

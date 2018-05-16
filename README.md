@@ -5,7 +5,7 @@ a finite-state-machine that switches reducers.
 
 # example
 see this example in [this directory](./example/index.ts).
-run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v1.0.0/example/index.html).
+run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v1.0.1/example/index.html).
 
 ```ts
 import createAutomataReducer, { AutomataSpec, StandardAction } from '../src/'
@@ -31,11 +31,11 @@ const automata: AutomataSpec<State> = {
 const reducer = createAutomataReducer(automata, 'init')
 
 const idle = reducer(void 0, actions.IDLE())
-log('IDLE():')(idle)
+log('IDLE():')(idle) // IDLE(): {"state":"idle"}
 const fourtytwo = reducer(idle, actions.INCREMENT(42))
-log('INCREMENT(42):')(fourtytwo)
+log('INCREMENT(42):')(fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
 const init = reducer(fourtytwo, actions.RESET())
-log('RESET():')(init)
+log('RESET():')(init) // RESET(): {"state":"init","value":0}
 
 function increment (
   state: Partial<State> = {},
@@ -53,40 +53,41 @@ function reset (
   return { value: 0 }
 }
 ```
-see another example in [component-from-stream-redux-epic-operator](https://npmjs.com/package/component-from-stream-redux-epic-operator/#example).
 
 # API
 ```ts
-export default function createAutomataReducer<S extends object, A = StandardAction<any>>(
-  automata: AutomataSpec<S, A>,
-  init: string,
-  toStandardAction?: ActionStandardizer
-): Reducer<S, A>
-export default function createAutomataReducer<S extends object, A = StandardAction<any>>(
-  automata: AutomataSpec<S, A>,
-  init: string,
-  key: string,
-  toStandardAction?: ActionStandardizer
-): Reducer<S, A>
+export default function createAutomataReducer
+  <S extends object, A = StandardAction<any>>(
+    automata: AutomataSpec<S, A>,
+    init: string,
+    toStandardAction?: ActionStandardizer
+  ): Reducer<S, A>
+export default function createAutomataReducer
+  <S extends object, A = StandardAction<any>>(
+    automata: AutomataSpec<S, A>,
+    init: string,
+    key: string,
+    toStandardAction?: ActionStandardizer
+  ): Reducer<S, A>
 
 export interface AutomataSpec<S, A = StandardAction<any>> {
   [state: string]: {
-    [type: string]: (Reducer<S, A> | string)[] | (Reducer<S, A> | string)
+    [type: string]: (Reducer<Partial<S>, A> | string)[] | (Reducer<Partial<S>, A> | string)
   }
 }
 
 export interface StandardAction<P> {
-    type: string
-    payload?: P
+  type: string
+  payload?: P
 }
 
 export declare type Reducer<S, A = StandardAction<any>> =
-  (state: Partial<S>, action: A) => Partial<S>
+  (state: S, action: A) => S
 
 export declare type ActionStandardizer = <A, P>(action: A) => StandardAction<P>
 ```
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v1.0.0/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v1.0.1/spec/web/index.html)
 in your browser.
 
 # TypeScript
