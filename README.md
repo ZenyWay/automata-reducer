@@ -19,6 +19,8 @@ interface State {
   value: number
 }
 
+const inValue = propCursor('value')
+
 const automata: AutomataSpec<State> = {
   'init': {
     IDLE: 'idle',
@@ -76,7 +78,7 @@ export default function createAutomataReducer
   <S extends object, A = StandardAction<any>>(
     automata: AutomataSpec<S, A>,
     init: string,
-    key: string,
+    key: string, // optional: custom key for the automata state (default: 'state')
     toStandardAction?: ActionStandardizer
   ): Reducer<S, A>
 
