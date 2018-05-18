@@ -13,7 +13,8 @@
  * Limitations under the License.
  */
 ;
-import createAutomataReducer, { AutomataSpec, StandardAction } from '../src/'
+import createAutomataReducer, { AutomataSpec, StandardAction } from '../'
+import { propCursor } from 'basic-cursors'
 import actions from './actions'
 import log from './console'
 
@@ -22,14 +23,16 @@ interface State {
   value: number
 }
 
+const inValue = propCursor('value')
+
 const automata: AutomataSpec<State> = {
   'init': {
     IDLE: 'idle',
-    INCREMENT: [increment, 'idle']
+    INCREMENT: [inValue(increment), 'idle']
   },
   'idle': {
-    RESET: ['init', reset],
-    INCREMENT: increment
+    RESET: ['init', inValue(reset)],
+    INCREMENT: inValue(increment)
   }
 }
 
@@ -42,13 +45,10 @@ log('INCREMENT(42):')(fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
 const init = reducer(fourtytwo, actions.RESET())
 log('RESET():')(init) // RESET(): {"state":"init","value":0}
 
-function increment (state: State, action: StandardAction<number>): State {
-  const { value = 0 } = state || {}
-  const { payload } = action
-  return state && !payload ? state : { ...state, value: payload + value }
+function increment (value: number = 0, { payload }: StandardAction<number>): number {
+  return !payload ? value : value + payload
 }
 
-function reset (state: State, action: StandardAction<void>): State {
-  const { value = 0 } = state || {}
-  return state && !value ? state : { ...state, value: 0 }
+function reset (): number {
+  return 0
 }
