@@ -1,12 +1,12 @@
 # automata-reducer
 [![NPM](https://nodei.co/npm/automata-reducer.png?compact=true)](https://nodei.co/npm/automata-reducer/)
 
-a tiny (390 bytes) simple finite-state-machine that switches reducers.
+a tiny (0.4kB) finite-state-machine that switches reducers.
 no dependencies.
 
 # example
 see this example in [this directory](./example/index.ts).<br/>
-run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.1/example/index.html).
+run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.3/example/index.html).
 
 ```ts
 import createAutomataReducer, { AutomataSpec, StandardAction } from '../'
@@ -32,8 +32,8 @@ const automata: AutomataSpec<State> = {
   }
 }
 
-function increment (value: number = 0, { payload }: StandardAction<number>): number {
-  return !payload ? value : value + payload
+function increment (value: number = 0, { payload }: StandardAction<number>) {
+  return value + +payload
 }
 
 function reset (): number {
@@ -99,7 +99,7 @@ export declare type Reducer<S, A = StandardAction<any>> =
 export declare type ActionStandardizer = <A, P>(action: A) => StandardAction<P>
 ```
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.0/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.3/spec/web/index.html)
 in your browser.
 
 # TypeScript

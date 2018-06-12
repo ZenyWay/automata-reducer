@@ -1,7 +1,7 @@
 {
   "name": "automata-reducer",
-  "version": "2.0.2",
-  "description": "a tiny (390 bytes) simple finite-state-machine that switches reducers",
+  "version": "2.0.3",
+  "description": "a tiny (0.4kB) finite-state-machine that switches reducers",
   "main": "dist/index.min.js",
   "typings": "dist/index.d.ts",
   "scripts": {

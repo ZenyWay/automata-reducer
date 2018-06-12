@@ -45,8 +45,8 @@ log('INCREMENT(42):')(fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
 const init = reducer(fourtytwo, actions.RESET())
 log('RESET():')(init) // RESET(): {"state":"init","value":0}
 
-function increment (value: number = 0, { payload }: StandardAction<number>): number {
-  return !payload ? value : value + payload
+function increment (value: number = 0, { payload }: StandardAction<number>) {
+  return value + +payload
 }
 
 function reset (): number {

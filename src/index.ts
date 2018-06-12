@@ -52,13 +52,13 @@ export default function createAutomataReducer<S extends object,A=StandardAction<
   const toStandardAction: ActionStandardizer = arguments[3] || identity
   const _automata = preprocess(automata, key)
 
-  return function(previous = { [key]: init } as S, event) {
+  return function(previous = {} as S, event) {
     // debugger
+    let state = previous[key] ? previous : { ...(<object>previous), [key]: init } as S
     const { type } = toStandardAction(event)
-    const reducers = _automata[previous[key]][type] || []
+    const reducers = _automata[state[key]][type] || []
 
     let i = reducers.length
-    let state = previous
     while (i--) {
       state = reducers[i](state, event)
     }
