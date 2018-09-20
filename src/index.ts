@@ -13,38 +13,65 @@
  * Limitations under the License.
  */
 ;
-export interface AutomataSpec<S,A=StandardAction<any>> {
-  [state: string]: {
-    [type: string]: (Reducer<S,A>|string)[]|(Reducer<S,A>|string)
-  }
+export type AutomataSpec<
+  K extends string,
+  S extends {}={},
+  A=StandardAction<P>,
+  P={}
+> = {
+  [state in K]: ReducerSpec<K,S,A>
 }
+
+export interface ReducerSpec<
+  K extends string,
+  S extends {}={},
+  A=StandardAction<P>,
+  P={}
+> {
+  [type: string]: (Reducer<S,A,P> | K)[] | Reducer<S,A,P> | K
+}
+
+export type Reducer<S,A=StandardAction<P>,P={}> = (state: S, action: A) => S
 
 export interface StandardAction<P> {
   type: string
   payload?: P
 }
 
-export type Reducer<S,A=StandardAction<any>> = (state: S, action: A) => S
-
-export type ActionStandardizer = <A,P>(action: A) => StandardAction<P>
+export type ActionStandardizer = <A,P={}>(action: A) => StandardAction<P>
 
 const DEFAULT_AUTOMATA_STATE_KEY = 'state'
 
-export default function createAutomataReducer<S extends object,A=StandardAction<any>> (
-  automata: AutomataSpec<S,A>,
+export default function createAutomataReducer<
+  K extends string,
+  S extends {}={},
+  A=StandardAction<P>,
+  P={}
+> (
+  automata: AutomataSpec<K,S,A,P>,
   init: string,
   toStandardAction?: ActionStandardizer
-): Reducer<S,A>
-export default function createAutomataReducer<S extends object,A=StandardAction<any>> (
-  automata: AutomataSpec<S,A>,
+): Reducer<S,A,P>
+export default function createAutomataReducer<
+  K extends string,
+  S extends {}={},
+  A=StandardAction<P>,
+  P={}
+> (
+  automata: AutomataSpec<K,S,A,P>,
   init: string,
   key: string,
   toStandardAction?: ActionStandardizer
-): Reducer<S,A>
-export default function createAutomataReducer<S extends object,A=StandardAction<any>> (
-  automata: AutomataSpec<S,A>,
+): Reducer<S,A,P>
+export default function createAutomataReducer<
+  K extends string,
+  S extends {}={},
+  A=StandardAction<P>,
+  P={}
+> (
+  automata: AutomataSpec<K,S,A,P>,
   init: string
-): Reducer<S,A> {
+): Reducer<S,A,P> {
   const key: string|ActionStandardizer = arguments[2] || DEFAULT_AUTOMATA_STATE_KEY
   if (!isString(key)) {
     return createAutomataReducer(automata, init, void 0, key)
@@ -54,7 +81,9 @@ export default function createAutomataReducer<S extends object,A=StandardAction<
 
   return function(previous = {} as S, event) {
     // debugger
-    let state = previous[key] ? previous : { ...(<object>previous), [key]: init } as S
+    let state = previous[key]
+      ? previous
+      : { ...(<{}>previous), [key]: init } as S
     const { type } = toStandardAction(event)
     const reducers = _automata[state[key]][type] || []
 
@@ -66,10 +95,15 @@ export default function createAutomataReducer<S extends object,A=StandardAction<
   }
 }
 
-function preprocess <S,A>(
-  automata: AutomataSpec<S,A>,
+function preprocess <
+  K extends string,
+  S extends {}={},
+  A=StandardAction<P>,
+  P={}
+>(
+  automata: AutomataSpec<K,S,A,P>,
   key: string
-): Automata<S,A> {
+): Automata<K,S,A,P> {
   return Object.keys(automata).reduce(
     function (states, state) {
       const events = automata[state]
@@ -78,14 +112,14 @@ function preprocess <S,A>(
           reducers[type] = [].concat(events[type]).map(withAutomataReducer)
           return reducers
         },
-        {} as { [type: string]: Reducer<S,A>[] }
+        {} as { [type: string]: Reducer<S,A,P>[] }
       )
       return states
     },
-    {} as Automata<S,A>
+    {} as Automata<K,S,A,P>
   )
 
-  function withAutomataReducer (reducer: string|Reducer<S,A>): Reducer<S,A> {
+  function withAutomataReducer (reducer: K|Reducer<S,A,P>): Reducer<S,A,P> {
     return !isString(reducer)
       ? reducer
       : function (state: S) {
@@ -96,8 +130,13 @@ function preprocess <S,A>(
   }
 }
 
-interface Automata<S,A=StandardAction<any>> {
-  [state: string]: { [type: string]: Reducer<S,A>[] }
+type Automata<
+  K extends string,
+  S extends {}={},
+  A=StandardAction<P>,
+  P={}
+> = {
+  [state in K]: { [type: string]: Reducer<S,A,P>[] }
 }
 
 function isString (v: any): v is string {

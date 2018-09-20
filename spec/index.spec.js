@@ -74,7 +74,8 @@ describe('createAutomataReducer:', function () {
       expect(init).toEqual({ state: 'init' })
     })
 
-    describe('when its factory was called with an additional `key` string argument:',
+    describe('when its factory was called with ' +
+    'an additional `key` string argument:',
     function () {
       let state
       beforeEach(function () {

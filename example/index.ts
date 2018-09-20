@@ -16,21 +16,24 @@
 import createAutomataReducer, { AutomataSpec, StandardAction } from '../'
 import { propCursor } from 'basic-cursors'
 import actions from './actions'
-import log from './console'
+import logger from './console'
+const log = logger()
 
 interface State {
-  state: string
+  state: AutomataState
   value: number
 }
 
+type AutomataState = 'init' | 'idle'
+
 const inValue = propCursor('value')
 
-const automata: AutomataSpec<State> = {
-  'init': {
+const automata: AutomataSpec<AutomataState,State> = {
+  init: {
     IDLE: 'idle',
     INCREMENT: [inValue(increment), 'idle']
   },
-  'idle': {
+  idle: {
     RESET: ['init', inValue(reset)],
     INCREMENT: inValue(increment)
   }
@@ -39,11 +42,11 @@ const automata: AutomataSpec<State> = {
 const reducer = createAutomataReducer(automata, 'init')
 
 const idle = reducer(void 0, actions.IDLE())
-log('IDLE():')(idle) // IDLE(): {"state":"idle"}
+log('IDLE(): %O', idle) // IDLE(): {"state":"idle"}
 const fourtytwo = reducer(idle, actions.INCREMENT(42))
-log('INCREMENT(42):')(fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
+log('INCREMENT(42): %O', fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
 const init = reducer(fourtytwo, actions.RESET())
-log('RESET():')(init) // RESET(): {"state":"init","value":0}
+log('RESET(): %O', init) // RESET(): {"state":"init","value":0}
 
 function increment (value: number = 0, { payload }: StandardAction<number>) {
   return value + +payload

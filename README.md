@@ -6,27 +6,30 @@ no dependencies.
 
 # example
 see this example in [this directory](./example/index.ts).<br/>
-run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.3/example/index.html).
+run this example [in your browser](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.1.0/example/index.html).
 
 ```ts
-import createAutomataReducer, { AutomataSpec, StandardAction } from '../'
+import createAutomataReducer, { AutomataSpec, StandardAction } from 'automata-reducer'
 import { propCursor } from 'basic-cursors'
 import actions from './actions'
-import log from './console'
+import logger from './console'
+const log = logger()
 
 interface State {
-  state: string
+  state: AutomataState
   value: number
 }
 
+type AutomataState = 'init' | 'idle'
+
 const inValue = propCursor('value')
 
-const automata: AutomataSpec<State> = {
-  'init': {
+const automata: AutomataSpec<AutomataState,State> = {
+  init: {
     IDLE: 'idle',
     INCREMENT: [inValue(increment), 'idle']
   },
-  'idle': {
+  idle: {
     RESET: ['init', inValue(reset)],
     INCREMENT: inValue(increment)
   }
@@ -43,11 +46,11 @@ function reset (): number {
 const reducer = createAutomataReducer(automata, 'init')
 
 const idle = reducer(void 0, actions.IDLE())
-log('IDLE():')(idle) // IDLE(): {"state":"idle"}
+log('IDLE(): %O', idle) // IDLE(): {"state":"idle"}
 const fourtytwo = reducer(idle, actions.INCREMENT(42))
-log('INCREMENT(42):')(fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
+log('INCREMENT(42): %O', fourtytwo) // INCREMENT(42): {"state":"idle","value":42}
 const init = reducer(fourtytwo, actions.RESET())
-log('RESET():')(init) // RESET(): {"state":"init","value":0}
+log('RESET(): %O', init) // RESET(): {"state":"init","value":0}
 ```
 
 # API
@@ -68,38 +71,59 @@ resulting in a self-documenting the automata spec,
 such as in the above example.
 
 ```ts
-export default function createAutomataReducer
-  <S extends object, A = StandardAction<any>>(
-    automata: AutomataSpec<S, A>,
-    init: string,
-    toStandardAction?: ActionStandardizer
-  ): Reducer<S, A>
-export default function createAutomataReducer
-  <S extends object, A = StandardAction<any>>(
-    automata: AutomataSpec<S, A>,
-    init: string,
-    key: string, // optional: custom key for the automata state (default: 'state')
-    toStandardAction?: ActionStandardizer
-  ): Reducer<S, A>
+export default function createAutomataReducer<
+  K extends string,
+  S extends {} = {},
+  A = StandardAction<P>,
+  P = {}
+>(
+  automata: AutomataSpec<K, S, A, P>,
+  init: string,
+  toStandardAction?: ActionStandardizer
+): Reducer<S, A, P>
+export default function createAutomataReducer<
+  K extends string,
+  S extends {} = {},
+  A = StandardAction<P>,
+  P = {}
+>(
+  automata: AutomataSpec<K, S, A, P>,
+  init: string,
+  key: string,
+  toStandardAction?: ActionStandardizer
+): Reducer<S, A, P>
 
-export interface AutomataSpec<S, A = StandardAction<any>> {
-  [state: string]: {
-    [type: string]: (Reducer<Partial<S>, A> | string)[] | (Reducer<Partial<S>, A> | string)
-  }
+export declare type AutomataSpec<
+  K extends string,
+  S extends {} = {},
+  A = StandardAction<P>,
+  P = {}
+> = {
+  [state in K]: ReducerSpec<K, S, A>
 }
+
+export interface ReducerSpec<
+  K extends string,
+  S extends {} = {},
+  A = StandardAction<P>,
+  P = {}
+> {
+  [type: string]: (Reducer<S, A, P> | K)[] | Reducer<S, A, P> | K
+}
+
+export declare type Reducer<S, A = StandardAction<P>, P = {}> =
+  (state: S, action: A) => S
 
 export interface StandardAction<P> {
   type: string
   payload?: P
 }
 
-export declare type Reducer<S, A = StandardAction<any>> =
-  (state: S, action: A) => S
-
-export declare type ActionStandardizer = <A, P>(action: A) => StandardAction<P>
+export declare type ActionStandardizer =
+  <A, P = {}>(action: A) => StandardAction<P>
 ```
 for a detailed specification of this API,
-run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.0.3/spec/web/index.html)
+run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.1.0/spec/web/index.html)
 in your browser.
 
 # TypeScript

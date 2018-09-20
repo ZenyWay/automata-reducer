@@ -13,6 +13,7 @@
  * Limitations under the License.
  */
 ;
+const printf = require('printf')
 declare const Terminal: any
 
 const term = new Terminal({
@@ -23,10 +24,9 @@ const term = new Terminal({
 })
 term.open(document.querySelector('#terminal'))
 
-const stringify = JSON.stringify.bind(JSON)
-
-export default function log (this: void, label: string) {
+export default function log (this: void, label?: string) {
   return function (...args) {
-    term.writeln([label].concat(args.map(stringify)).join(' '))
+    const text = printf(...args)
+    term.writeln(label ? `${label} ${text}` : text)
   }
 }
