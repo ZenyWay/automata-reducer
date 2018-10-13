@@ -75,11 +75,25 @@ describe('createAutomataReducer:', function () {
     })
 
     describe('when its factory was called with ' +
-    'an additional `key` string argument:',
+    'an optional `key` string argument:',
     function () {
       let state
       beforeEach(function () {
         reducer = createAutomataReducer(automata, 'init', 'foo')
+        state = reducer(void 0, actions.IDLE())
+      })
+
+      it('reduces automata state at that key in the state object', function () {
+        expect(state).toEqual({ foo: 'idle' })
+      })
+    })
+
+    describe('when its factory was called with ' +
+    'an optional `{ key: string }` object argument:',
+    function () {
+      let state
+      beforeEach(function () {
+        reducer = createAutomataReducer(automata, 'init', { key: 'foo' })
         state = reducer(void 0, actions.IDLE())
       })
 
