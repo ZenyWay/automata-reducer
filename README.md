@@ -62,7 +62,7 @@ const init = reducer(fourtytwo, actions.RESET())
 log('RESET(): %O', init) // RESET(): {"state":"init","value":0}
 ```
 
-# API
+# API v3.0
 as demonstrated in the above example, for each automata state,
 the automata spec defines a single reducer or a list of reducers
 for each action (or event) relevant to that state.
@@ -81,55 +81,55 @@ such as in the above example.
 
 ```ts
 export default function createAutomataReducer<
-  K extends string,
-  S extends {} = {},
-  A = StandardAction<P>,
-  P = {}
->(
-  automata: AutomataSpec<K, S, A, P>,
-  init: string,
-  toStandardAction?: ActionStandardizer
-): Reducer<S, A, P>
-export default function createAutomataReducer<
-  K extends string,
-  S extends {} = {},
-  A = StandardAction<P>,
-  P = {}
->(
-  automata: AutomataSpec<K, S, A, P>,
-  init: string,
-  key: string,
-  toStandardAction?: ActionStandardizer
-): Reducer<S, A, P>
+  X extends string,
+  K extends string = 'state',
+  I extends { [key in K]: X } = { [key in K]: X },
+  O = I,
+  P = {},
+  A = StandardAction<P>>(automata: AutomataSpec<X, I, P, A>,
+  init: X,
+  opts?: Partial<AutomataReducerOptions<X, K, I, O, P>> | string
+): Reducer<O, P, A>
 
 export declare type AutomataSpec<
-  K extends string,
+  X extends string,
   S extends {} = {},
-  A = StandardAction<P>,
-  P = {}
-> = {
-  [state in K]: ReducerSpec<K, S, A>
-}
+  P = {},
+  A = StandardAction<P>
+> = { [state in X]: ReducerSpec<X, S, P, A> }
 
 export interface ReducerSpec<
-  K extends string,
+  X extends string,
   S extends {} = {},
-  A = StandardAction<P>,
-  P = {}
-> {
-  [type: string]: (Reducer<S, A, P> | K)[] | Reducer<S, A, P> | K
-}
+  P = {},
+  A = StandardAction<P>
+> { [type: string]: (Reducer<S, P, A> | X)[] | Reducer<S, P, A> | X }
 
-export declare type Reducer<S, A = StandardAction<P>, P = {}> =
+export declare type Reducer<S, P = {}, A = StandardAction<P>> =
   (state: S, action: A) => S
 
-export interface StandardAction<P> {
-  type: string
-  payload?: P
+export interface StandardAction<P = {}> {
+    type: string
+    payload?: P
 }
 
-export declare type ActionStandardizer =
-  <A, P = {}>(action: A) => StandardAction<P>
+export interface AutomataReducerOptions<
+  X extends string = string,
+  K extends string = 'state',
+  I extends { [key in K]: X } = { [key in K]: X },
+  O = I,
+  P = {}
+> {
+  key: K
+  toStandardAction: ActionStandardizer<P>
+  operator: Operator<I, O>
+}
+
+export declare type ActionStandardizer<P = {}> =
+  <A>(action: A) => StandardAction<P>
+
+export declare type Operator<I = {}, O = I> =
+  (fn: (i: I, ...args: any[]) => I) => (o: O, ...args: any[]) => O
 ```
 for a detailed specification of this API,
 run the [unit tests](https://cdn.rawgit.com/ZenyWay/automata-reducer/v2.1.0/spec/web/index.html)
