@@ -85,7 +85,7 @@ export default function createAutomataReducer<
   K extends string = 'state',
   I extends { [key in K]: X } = { [key in K]: X },
   O = I,
-  P = {},
+  P=any,
   A = StandardAction<P>>(automata: AutomataSpec<X, I, P, A>,
   init: X,
   opts?: Partial<AutomataReducerOptions<X, K, I, O, P>> | string
@@ -93,22 +93,22 @@ export default function createAutomataReducer<
 
 export declare type AutomataSpec<
   X extends string,
-  S extends {} = {},
-  P = {},
+  S=any,
+  P=any,
   A = StandardAction<P>
 > = { [state in X]: ReducerSpec<X, S, P, A> }
 
 export interface ReducerSpec<
   X extends string,
-  S extends {} = {},
-  P = {},
+  S=any,
+  P=any,
   A = StandardAction<P>
 > { [type: string]: (Reducer<S, P, A> | X)[] | Reducer<S, P, A> | X }
 
-export declare type Reducer<S, P = {}, A = StandardAction<P>> =
+export declare type Reducer<S, P=any, A = StandardAction<P>> =
   (state: S, action: A) => S
 
-export interface StandardAction<P = {}> {
+export interface StandardAction<P=any> {
     type: string
     payload?: P
 }
@@ -118,14 +118,14 @@ export interface AutomataReducerOptions<
   K extends string = 'state',
   I extends { [key in K]: X } = { [key in K]: X },
   O = I,
-  P = {}
+  P=any
 > {
   key: K
   toStandardAction: ActionStandardizer<P>
   operator: Operator<I, O>
 }
 
-export declare type ActionStandardizer<P = {}> =
+export declare type ActionStandardizer<P=any> =
   <A>(action: A) => StandardAction<P>
 
 export declare type Operator<I = {}, O = I> =
