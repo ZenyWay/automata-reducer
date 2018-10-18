@@ -1,13 +1,14 @@
 # automata-reducer
 [![NPM](https://nodei.co/npm/automata-reducer.png?compact=true)](https://nodei.co/npm/automata-reducer/)
 
-a tiny (< 0.5kb) finite-state-machine that switches reducers.
+a tiny (< 0.5kb gzip) finite-state-machine that switches reducers.
 no dependencies.
 
 since version 3.0, an optional functional operator may be supplied to the factory.
 that operator is applied to the automata reducer only for known events,
 i.e. events for which a reducer or list of reducers
 is defined in the automata spec.
+unknown events trigger a default value reducer for proper initialization.
 this is useful for e.g. efficiently applying the automata reducer
 through a cursor (lense): for example, to apply an automata
 to a single `todo` instance in a list of `todo` instances

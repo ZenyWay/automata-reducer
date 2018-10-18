@@ -31,7 +31,7 @@ export interface ReducerSpec<
   [type: string]: (Reducer<S,P,A> | X)[] | Reducer<S,P,A> | X
 }
 
-export type Reducer<S,P=any,A=StandardAction<P>> = (state: S, action: A) => S
+export type Reducer<S,P=any,A=StandardAction<P>> = (state?: S, action?: A) => S
 
 export interface StandardAction<P=any> {
   type: string
@@ -80,12 +80,14 @@ export default function createAutomataReducer<
     ...(AUTOMATA_REDUCER_DEFAULTS as Partial<AutomataReducerOptions<X,K,I,O,P>>),
     ...opts
   }
-  const _automata = preprocess(automata, init, key, operator)
+  const withDefaultAutomataState = withDefaultEntry(key, init)
+  const withDefaultState = operator(withDefaultAutomataState)
+  const _automata = preprocess(automata, key, withDefaultAutomataState, operator)
 
-  return function (previous: O, event: A): O {
-    const { type } = toStandardAction(event)
-    const reducer = _automata[type]
-    return !reducer ? previous : reducer(previous, event)
+  return function (previous?: O, event?: A): O {
+    const { type } = toStandardAction(event) || {} as StandardAction<P>
+    const reducer = _automata[type] || withDefaultState
+    return reducer(previous, event)
   }
 }
 
@@ -98,8 +100,8 @@ function preprocess <
   A=StandardAction<P>
 >(
   spec: AutomataSpec<X,I,P,A>,
-  init: X,
   key: K,
+  withDefaultAutomataState: Reducer<I,P,A>,
   operator: Operator<I,O>
 ): AutomataReducerMap<O,P,A> {
   const _automata = Object.keys(spec).reduce(
@@ -130,15 +132,13 @@ function preprocess <
       return eventTypeToReducerMap
 
       function reducer (previous = {} as I, event= {} as A): I {
-        let state = previous[key]
-          ? previous
-          : { ...(<{}>previous), [key]: init } as I
-        const reducers: Reducer<I,P,A>[] =
-          stateToReducersMap[state[key]] || ([] as Reducer<I,P,A>[])
-
-        let i = reducers.length
-        while (i--) {
-          state = reducers[i](state, event)
+        let state = withDefaultAutomataState(previous)
+        const reducers: Reducer<I,P,A>[] = stateToReducersMap[state[key]]
+        if (reducers) {
+          let i = reducers.length
+          while (i--) {
+            state = reducers[i](state, event)
+          }
         }
         return state
       }
@@ -173,6 +173,14 @@ type AutomataReducerMap<
   A=StandardAction<P>
 > = {
   [type: string]: Reducer<S,P,A>
+}
+
+function withDefaultEntry <K extends string> (key: K, value: string) {
+  return function <S extends {[key in K]: any}={[key in K]: any}>(
+    map = {} as Partial<S>
+  ) {
+    return (map[key] ? map : { ...(map as {}), [key]: value }) as S
+  }
 }
 
 function isString (v: any): v is string {
