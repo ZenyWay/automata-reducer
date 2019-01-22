@@ -20,25 +20,22 @@ describe('createAutomataReducer:', function () {
 
   beforeEach(function () {
     createActions = function (actions) {
-      return actions.reduce(
-        function (actions, type) {
-          actions[type] = function (payload) {
-            return { type, payload }
-          }
-          return actions
-        },
-        {}
-      )
+      return actions.reduce(function (actions, type) {
+        actions[type] = function (payload) {
+          return { type, payload }
+        }
+        return actions
+      }, {})
     }
     actions = createActions(['IDLE', 'INCREMENT', 'RESET'])
     increment = jasmine.createSpy('increment')
     reset = jasmine.createSpy('reset')
     automata = {
-      'init': {
+      init: {
         IDLE: 'idle',
         INCREMENT: [increment, 'idle']
       },
-      'idle': {
+      idle: {
         RESET: ['init', reset],
         INCREMENT: increment
       }
@@ -74,32 +71,36 @@ describe('createAutomataReducer:', function () {
       expect(init).toEqual({ state: 'init' })
     })
 
-    describe('when its factory was called with ' +
-    'an optional `key` string argument:',
-    function () {
-      let state
-      beforeEach(function () {
-        reducer = createAutomataReducer(automata, 'init', 'foo')
-        state = reducer(void 0, actions.IDLE())
-      })
+    describe(
+      'when its factory was called with ' +
+        'an optional `key` string argument:',
+      function () {
+        let state
+        beforeEach(function () {
+          reducer = createAutomataReducer(automata, 'init', 'foo')
+          state = reducer(void 0, actions.IDLE())
+        })
 
-      it('reduces automata state at that key in the state object', function () {
-        expect(state).toEqual({ foo: 'idle' })
-      })
-    })
+        it('reduces automata state at that key in the state object', function () {
+          expect(state).toEqual({ foo: 'idle' })
+        })
+      }
+    )
 
-    describe('when its factory was called with ' +
-    'an optional `{ key: string }` object argument:',
-    function () {
-      let state
-      beforeEach(function () {
-        reducer = createAutomataReducer(automata, 'init', { key: 'foo' })
-        state = reducer(void 0, actions.IDLE())
-      })
+    describe(
+      'when its factory was called with ' +
+        'an optional `{ key: string }` object argument:',
+      function () {
+        let state
+        beforeEach(function () {
+          reducer = createAutomataReducer(automata, 'init', { key: 'foo' })
+          state = reducer(void 0, actions.IDLE())
+        })
 
-      it('reduces automata state at that key in the state object', function () {
-        expect(state).toEqual({ foo: 'idle' })
-      })
-    })
+        it('reduces automata state at that key in the state object', function () {
+          expect(state).toEqual({ foo: 'idle' })
+        })
+      }
+    )
   })
 })

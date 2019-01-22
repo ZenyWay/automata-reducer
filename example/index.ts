@@ -28,7 +28,7 @@ type AutomataState = 'init' | 'idle'
 
 const inValue = propCursor('value')
 
-const automata: AutomataSpec<AutomataState,State> = {
+const automata: AutomataSpec<AutomataState, State> = {
   init: {
     IDLE: 'idle',
     INCREMENT: [inValue(increment), 'idle']
