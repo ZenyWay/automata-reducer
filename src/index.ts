@@ -15,26 +15,30 @@
 export type AutomataSpec<
   X extends string | number,
   S = any, // reducer state
+  T extends string = string,
   P = any,
-  A = StandardAction<P>
-  > = { [state in X]: ReducerSpec<X, S, P, A> }
+  A = StandardAction<T, P>
+> = { [state in X]: ReducerSpec<X, S, T, P, A> }
 
 export interface ReducerSpec<
   X extends string | number,
   S = any,
+  T extends string = string,
   P = any,
-  A = StandardAction<P>
-  > {
-  [type: string]: (Reducer<S, P, A> | X)[] | Reducer<S, P, A> | X
+  A = StandardAction<T, P>
+> {
+  [type: string]: (Reducer<S, T, P, A> | X)[] | Reducer<S, T, P, A> | X
 }
 
-export type Reducer<S, P = any, A = StandardAction<P>> = (
-  state?: S,
-  action?: A
-) => S
+export type Reducer<
+  S,
+  T extends string = string,
+  P = any,
+  A = StandardAction<T, P>
+> = (state?: S, action?: A) => S
 
-export interface StandardAction<P = any> {
-  type: string
+export interface StandardAction<T extends string = string, P = any> {
+  type: T
   payload?: P
 }
 
@@ -43,14 +47,17 @@ export interface AutomataReducerOptions<
   K extends string | number = 'state',
   I extends { [key in K]: X } = { [key in K]: X },
   O = I,
+  T extends string = string,
   P = any
-  > {
+> {
   key: K
-  toStandardAction: ActionStandardizer<P>
+  toStandardAction: ActionStandardizer<T, P>
   operator: Operator<I, O>
 }
 
-export type ActionStandardizer<P = any> = <A>(action: A) => StandardAction<P>
+export type ActionStandardizer<T extends string = string, P = any> = <A>(
+  action: A
+) => StandardAction<T, P>
 
 export type Operator<I = {}, O = I> = (
   fn: (i: I, ...args: any[]) => I
@@ -69,19 +76,20 @@ export default function createAutomataReducer<
   K extends string | number = 'state', // key in S of AutomataState prop
   I extends { [key in K]: X } = { [key in K]: X }, // inner state, on which the automata operates
   O = I, // outer state, on which the returned reducer operates
+  T extends string = string,
   P = any,
-  A = StandardAction<P>
+  A = StandardAction<T, P>
 > (
-  automata: AutomataSpec<X, I, P, A>,
+  automata: AutomataSpec<X, I, T, P, A>,
   init: X,
-  opts?: Partial<AutomataReducerOptions<X, K, I, O, P>> | string
-): Reducer<O, P, A> {
+  opts?: Partial<AutomataReducerOptions<X, K, I, O, T, P>> | string
+): Reducer<O, T, P, A> {
   if (isStringOrNumber(opts)) {
     return createAutomataReducer(automata, init, { key: opts })
   }
   const { key, toStandardAction, operator } = {
     ...(AUTOMATA_REDUCER_DEFAULTS as Partial<
-      AutomataReducerOptions<X, K, I, O, P>
+      AutomataReducerOptions<X, K, I, O, T, P>
     >),
     ...opts
   }
@@ -95,7 +103,7 @@ export default function createAutomataReducer<
   )
 
   return function (previous?: O, event?: A): O {
-    const { type } = toStandardAction(event) || ({} as StandardAction<P>)
+    const { type } = toStandardAction(event) || ({} as StandardAction<T, P>)
     const reducer = _automata[type] || withDefaultState
     return reducer(previous, event)
   }
@@ -106,26 +114,27 @@ function preprocess<
   K extends string | number,
   I extends { [key in K]: X } = { [key in K]: X },
   O = I,
+  T extends string = string,
   P = any,
-  A = StandardAction<P>
+  A = StandardAction<T, P>
 > (
-  spec: AutomataSpec<X, I, P, A>,
+  spec: AutomataSpec<X, I, T, P, A>,
   key: K,
-  withDefaultAutomataState: Reducer<I, P, A>,
+  withDefaultAutomataState: Reducer<I, T, P, A>,
   operator: Operator<I, O>
-): AutomataReducerMap<O, P, A> {
+): AutomataReducerMap<O, T, P, A> {
   const _automata = Object.keys(spec).reduce(
-    function (automata: Automata<X, K, I, P, A>, state: string) {
-      const events: ReducerSpec<X, I, P, A> = spec[state]
+    function (automata: Automata<X, K, I, T, P, A>, state: string) {
+      const events: ReducerSpec<X, I, T, P, A> = spec[state]
       return Object.keys(events).reduce(function (
-        automata: Automata<X, K, I, P, A>,
+        automata: Automata<X, K, I, T, P, A>,
         type: string
       ) {
-        const reducers = ([] as (X | Reducer<I, P, A>)[])
+        const reducers = ([] as (X | Reducer<I, T, P, A>)[])
           .concat(events[type])
-          .map(withAutomataReducer)
+          .map(withAutomataStateReducer)
         automata[type] = Object.assign(
-          {} as { [state in K]: Reducer<O, P, A>[] },
+          {} as { [state in K]: Reducer<O, T, P, A>[] },
           automata[type],
           { [state]: reducers }
         )
@@ -133,12 +142,12 @@ function preprocess<
       },
       automata)
     },
-    {} as Automata<X, K, I, P, A>
+    {} as Automata<X, K, I, T, P, A>
   )
 
   return Object.keys(_automata).reduce(
     function (
-      eventTypeToReducerMap: AutomataReducerMap<O, P, A>,
+      eventTypeToReducerMap: AutomataReducerMap<O, T, P, A>,
       type: string
     ) {
       const stateToReducersMap = _automata[type]
@@ -147,7 +156,7 @@ function preprocess<
 
       function reducer (previous = {} as I, event = {} as A): I {
         let state = withDefaultAutomataState(previous)
-        const reducers: Reducer<I, P, A>[] = stateToReducersMap[state[key]]
+        const reducers: Reducer<I, T, P, A>[] = stateToReducersMap[state[key]]
         if (reducers) {
           let i = reducers.length
           while (i--) {
@@ -157,19 +166,19 @@ function preprocess<
         return state
       }
     },
-    {} as AutomataReducerMap<O, P, A>
+    {} as AutomataReducerMap<O, T, P, A>
   )
 
-  function withAutomataReducer (
-    reducer: X | Reducer<I, P, A>
-  ): Reducer<I, P, A> {
+  function withAutomataStateReducer (
+    reducer: X | Reducer<I, T, P, A>
+  ): Reducer<I, T, P, A> {
     return !isStringOrNumber(reducer)
       ? reducer
       : function (state: I) {
-        return state && state[key] === reducer
-          ? state
-          : { ...(<any>state), [key]: reducer }
-      }
+          return state && state[key] === reducer
+            ? state
+            : { ...(<any>state), [key]: reducer }
+        }
   }
 }
 
@@ -177,21 +186,27 @@ type Automata<
   X extends string | number,
   K extends string | number,
   S extends { [key in K]: X } = { [key in K]: X },
+  T extends string = string,
   P = any,
-  A = StandardAction<P>
-  > = {
-    [type: string]: { [state in X]: Reducer<S, P, A>[] }
-  }
+  A = StandardAction<T, P>
+> = {
+  [type: string]: { [state in X]: Reducer<S, T, P, A>[] }
+}
 
-type AutomataReducerMap<S, P = any, A = StandardAction<P>> = {
-  [type: string]: Reducer<S, P, A>
+type AutomataReducerMap<
+  S,
+  T extends string = string,
+  P = any,
+  A = StandardAction<T, P>
+> = {
+  [type: string]: Reducer<S, T, P, A>
 }
 
 function withDefaultEntry<K extends string | number> (
   key: K,
   value: string | number
 ) {
-  return function <S extends { [key in K]: any } = { [key in K]: any }> (
+  return function<S extends { [key in K]: any } = { [key in K]: any }> (
     map = {} as Partial<S>
   ) {
     return (map[key] ? map : { ...(map as {}), [key]: value }) as S
